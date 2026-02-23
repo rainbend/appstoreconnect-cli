@@ -1,0 +1,4 @@
+bin/
+*.p8
+.env
+.metadata/
