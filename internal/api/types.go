@@ -1,6 +1,9 @@
 package api
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 type Platform string
 
@@ -131,12 +134,50 @@ type BuildUpload struct {
 }
 
 type BuildUploadAttributes struct {
-	CFBundleShortVersionString string `json:"cfBundleShortVersionString,omitempty"`
-	CFBundleVersion            string `json:"cfBundleVersion,omitempty"`
-	CreatedDate                string `json:"createdDate,omitempty"`
-	State                      string `json:"state,omitempty"`
-	Platform                   string `json:"platform,omitempty"`
-	UploadedDate               string `json:"uploadedDate,omitempty"`
+	CFBundleShortVersionString string           `json:"cfBundleShortVersionString,omitempty"`
+	CFBundleVersion            string           `json:"cfBundleVersion,omitempty"`
+	CreatedDate                string           `json:"createdDate,omitempty"`
+	State                      BuildUploadState `json:"state,omitempty"`
+	Platform                   string           `json:"platform,omitempty"`
+	UploadedDate               string           `json:"uploadedDate,omitempty"`
+}
+
+type BuildUploadState string
+
+func (s BuildUploadState) String() string {
+	return string(s)
+}
+
+func (s *BuildUploadState) UnmarshalJSON(data []byte) error {
+	if string(data) == "null" {
+		*s = ""
+		return nil
+	}
+
+	var value string
+	if err := json.Unmarshal(data, &value); err == nil {
+		*s = BuildUploadState(value)
+		return nil
+	}
+
+	var stateObject struct {
+		State string `json:"state"`
+		Code  string `json:"code"`
+		Value string `json:"value"`
+	}
+	if err := json.Unmarshal(data, &stateObject); err != nil {
+		return err
+	}
+
+	switch {
+	case stateObject.State != "":
+		*s = BuildUploadState(stateObject.State)
+	case stateObject.Code != "":
+		*s = BuildUploadState(stateObject.Code)
+	default:
+		*s = BuildUploadState(stateObject.Value)
+	}
+	return nil
 }
 
 type BuildUploadFile struct {

@@ -170,7 +170,7 @@ func waitForBuildUpload(client *api.Client, buildUploadID string, timeout time.D
 			return fmt.Errorf("checking build upload status: %w", err)
 		}
 
-		state := strings.ToUpper(buildUpload.Attributes.State)
+		state := strings.ToUpper(buildUpload.Attributes.State.String())
 		if state == "" {
 			state = "UNKNOWN"
 		}
