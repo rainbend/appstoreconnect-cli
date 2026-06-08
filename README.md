@@ -10,6 +10,7 @@
 - **release** — 创建新版本或更新已有版本，将本地元数据同步到 App Store Connect
 - **upload** — 使用 Build Upload API 上传 `.ipa` / `.pkg` 构建文件到 App Store Connect
 - **latest-build** — 查询指定平台最新的 App Store Connect build 号
+- **reviews** — 查询 App Store 用户评论，并创建或更新开发者回复
 
 ## 安装
 
@@ -138,6 +139,55 @@ asctl latest-build --app-id <APP_ID> --platform ios --details
 asctl latest-build --app-id <APP_ID> --platform ios --state valid
 ```
 
+### 查询和回复用户评论
+
+查询最近的 App Store 用户评论：
+
+```bash
+asctl reviews list --app-id <APP_ID>
+```
+
+按地区、评分和已发布回复状态过滤：
+
+```bash
+asctl reviews list \
+  --app-id <APP_ID> \
+  --territory USA,CHN \
+  --rating 1,2 \
+  --response-state unresponded
+```
+
+查看已有回复内容：
+
+```bash
+asctl reviews list --app-id <APP_ID> --response-state responded --include-response
+```
+
+查询最近一周的评论：
+
+```bash
+asctl reviews list --app-id <APP_ID> --days 7
+```
+
+或指定起始日期：
+
+```bash
+asctl reviews list --app-id <APP_ID> --since 2026-06-01
+```
+
+回复一条评论；如果这条评论已经有回复，Apple 会替换为新的回复内容：
+
+```bash
+asctl reviews reply --review-id <REVIEW_ID> --body "感谢反馈，我们会继续改进。"
+```
+
+也可以从文件或标准输入读取回复内容：
+
+```bash
+asctl reviews reply --review-id <REVIEW_ID> --file reply.txt
+cat reply.txt | asctl reviews reply --review-id <REVIEW_ID> --file -
+```
+
 ### 参数说明
 
 **全局参数**
@@ -185,6 +235,30 @@ asctl latest-build --app-id <APP_ID> --platform ios --state valid
 | `--platform` | `-p` | `ios` | 平台：`ios` 或 `macos` |
 | `--state` | — | `all` | 处理状态：`all`、`valid`、`processing`、`failed`、`invalid` |
 | `--details` | — | `false` | 输出 build ID、处理状态、上传时间等详细信息 |
+
+**reviews list 命令**
+
+| 参数 | 简写 | 默认值 | 说明 |
+|------|------|--------|------|
+| `--app-id` | `-a` | `ASC_APP_ID` | App Store Connect App ID（必填） |
+| `--territory` | — | — | 地区过滤，多个地区用逗号分隔，如 `USA,CHN,HKG` |
+| `--rating` | — | — | 评分过滤，多个评分用逗号分隔，如 `1,2,5` |
+| `--response-state` | — | `all` | 已发布回复过滤：`all`、`responded`、`unresponded` |
+| `--since` | — | — | 只返回指定时间之后创建的评论，支持 `YYYY-MM-DD` 或 RFC3339 |
+| `--days` | — | `0` | 只返回最近 N 天的评论，如 `7` 表示最近一周 |
+| `--sort` | — | `-createdDate` | 排序：`createdDate`、`-createdDate`、`rating`、`-rating` |
+| `--limit` | — | `20` | 最多返回的评论数量 |
+| `--include-response` | — | `false` | 同时输出已有回复内容和状态 |
+| `--json` | — | `false` | 输出 JSON |
+
+**reviews reply 命令**
+
+| 参数 | 简写 | 默认值 | 说明 |
+|------|------|--------|------|
+| `--review-id` | — | — | 要回复的 customer review ID（必填） |
+| `--body` | — | — | 回复文本 |
+| `--file` | — | — | 从文件读取回复文本，传 `-` 表示从标准输入读取 |
+| `--json` | — | `false` | 输出 JSON |
 
 ## 典型工作流
 

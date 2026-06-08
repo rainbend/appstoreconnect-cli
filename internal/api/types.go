@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 )
 
 type Platform string
@@ -86,6 +87,16 @@ type ResourceIdentifier struct {
 	ID   string `json:"id"`
 }
 
+type OptionalRelationshipData struct {
+	Data  *ResourceIdentifier `json:"data,omitempty"`
+	Links RelationshipLinks   `json:"links,omitempty"`
+}
+
+type RelationshipLinks struct {
+	Self    string `json:"self,omitempty"`
+	Related string `json:"related,omitempty"`
+}
+
 type CreateLocalizationRequest struct {
 	Data CreateLocalizationData `json:"data"`
 }
@@ -125,6 +136,82 @@ type BuildAttributes struct {
 	ProcessingState         string `json:"processingState,omitempty"`
 	BuildAudienceType       string `json:"buildAudienceType,omitempty"`
 	UsesNonExemptEncryption bool   `json:"usesNonExemptEncryption,omitempty"`
+}
+
+type CustomerReview struct {
+	Type          string                      `json:"type"`
+	ID            string                      `json:"id"`
+	Attributes    CustomerReviewAttributes    `json:"attributes"`
+	Relationships CustomerReviewRelationships `json:"relationships,omitempty"`
+}
+
+type CustomerReviewAttributes struct {
+	Rating           int    `json:"rating,omitempty"`
+	Title            string `json:"title,omitempty"`
+	Body             string `json:"body,omitempty"`
+	ReviewerNickname string `json:"reviewerNickname,omitempty"`
+	CreatedDate      string `json:"createdDate,omitempty"`
+	Territory        string `json:"territory,omitempty"`
+}
+
+type CustomerReviewRelationships struct {
+	Response *OptionalRelationshipData `json:"response,omitempty"`
+}
+
+type CustomerReviewResponseV1 struct {
+	Type          string                               `json:"type"`
+	ID            string                               `json:"id"`
+	Attributes    CustomerReviewResponseAttributes     `json:"attributes,omitempty"`
+	Relationships *CustomerReviewResponseRelationships `json:"relationships,omitempty"`
+}
+
+type CustomerReviewResponseAttributes struct {
+	ResponseBody     string `json:"responseBody,omitempty"`
+	LastModifiedDate string `json:"lastModifiedDate,omitempty"`
+	State            string `json:"state,omitempty"`
+}
+
+type CustomerReviewResponseRelationships struct {
+	Review RelationshipData `json:"review,omitempty"`
+}
+
+type CustomerReviewsResponse struct {
+	Data     []CustomerReview           `json:"data"`
+	Included []CustomerReviewResponseV1 `json:"included,omitempty"`
+	Links    Links                      `json:"links,omitempty"`
+}
+
+type CustomerReviewsResult struct {
+	Reviews             []CustomerReview
+	ResponsesByReviewID map[string]*CustomerReviewResponseV1
+}
+
+type CustomerReviewsQuery struct {
+	Territories       []string
+	Ratings           []int
+	PublishedResponse *bool
+	IncludeResponse   bool
+	Sort              string
+	Limit             int
+	CreatedSince      *time.Time
+}
+
+type CreateCustomerReviewResponseRequest struct {
+	Data CreateCustomerReviewResponseData `json:"data"`
+}
+
+type CreateCustomerReviewResponseData struct {
+	Type          string                                    `json:"type"`
+	Attributes    CreateCustomerReviewResponseAttributes    `json:"attributes"`
+	Relationships CreateCustomerReviewResponseRelationships `json:"relationships"`
+}
+
+type CreateCustomerReviewResponseAttributes struct {
+	ResponseBody string `json:"responseBody"`
+}
+
+type CreateCustomerReviewResponseRelationships struct {
+	Review RelationshipData `json:"review"`
 }
 
 type BuildUpload struct {
