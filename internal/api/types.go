@@ -1,6 +1,9 @@
 package api
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 type Platform string
 
@@ -105,4 +108,154 @@ type UpdateLocalizationData struct {
 	Type       string                                `json:"type"`
 	ID         string                                `json:"id"`
 	Attributes AppStoreVersionLocalizationAttributes `json:"attributes"`
+}
+
+type Build struct {
+	Type       string          `json:"type"`
+	ID         string          `json:"id"`
+	Attributes BuildAttributes `json:"attributes"`
+}
+
+type BuildAttributes struct {
+	Version                 string `json:"version"`
+	UploadedDate            string `json:"uploadedDate,omitempty"`
+	ExpirationDate          string `json:"expirationDate,omitempty"`
+	Expired                 bool   `json:"expired,omitempty"`
+	MinOSVersion            string `json:"minOsVersion,omitempty"`
+	ProcessingState         string `json:"processingState,omitempty"`
+	BuildAudienceType       string `json:"buildAudienceType,omitempty"`
+	UsesNonExemptEncryption bool   `json:"usesNonExemptEncryption,omitempty"`
+}
+
+type BuildUpload struct {
+	Type       string                `json:"type"`
+	ID         string                `json:"id"`
+	Attributes BuildUploadAttributes `json:"attributes"`
+}
+
+type BuildUploadAttributes struct {
+	CFBundleShortVersionString string           `json:"cfBundleShortVersionString,omitempty"`
+	CFBundleVersion            string           `json:"cfBundleVersion,omitempty"`
+	CreatedDate                string           `json:"createdDate,omitempty"`
+	State                      BuildUploadState `json:"state,omitempty"`
+	Platform                   string           `json:"platform,omitempty"`
+	UploadedDate               string           `json:"uploadedDate,omitempty"`
+}
+
+type BuildUploadState string
+
+func (s BuildUploadState) String() string {
+	return string(s)
+}
+
+func (s *BuildUploadState) UnmarshalJSON(data []byte) error {
+	if string(data) == "null" {
+		*s = ""
+		return nil
+	}
+
+	var value string
+	if err := json.Unmarshal(data, &value); err == nil {
+		*s = BuildUploadState(value)
+		return nil
+	}
+
+	var stateObject struct {
+		State string `json:"state"`
+		Code  string `json:"code"`
+		Value string `json:"value"`
+	}
+	if err := json.Unmarshal(data, &stateObject); err != nil {
+		return err
+	}
+
+	switch {
+	case stateObject.State != "":
+		*s = BuildUploadState(stateObject.State)
+	case stateObject.Code != "":
+		*s = BuildUploadState(stateObject.Code)
+	default:
+		*s = BuildUploadState(stateObject.Value)
+	}
+	return nil
+}
+
+type BuildUploadFile struct {
+	Type       string                    `json:"type"`
+	ID         string                    `json:"id"`
+	Attributes BuildUploadFileAttributes `json:"attributes"`
+}
+
+type BuildUploadFileAttributes struct {
+	FileName           string              `json:"fileName,omitempty"`
+	FileSize           int64               `json:"fileSize,omitempty"`
+	AssetType          string              `json:"assetType,omitempty"`
+	UTI                string              `json:"uti,omitempty"`
+	Uploaded           bool                `json:"uploaded,omitempty"`
+	UploadOperations   []UploadOperation   `json:"uploadOperations,omitempty"`
+	AssetDeliveryState *AssetDeliveryState `json:"assetDeliveryState,omitempty"`
+}
+
+type UploadOperation struct {
+	Method         string                  `json:"method"`
+	URL            string                  `json:"url"`
+	Offset         int64                   `json:"offset"`
+	Length         int64                   `json:"length"`
+	RequestHeaders []UploadOperationHeader `json:"requestHeaders,omitempty"`
+}
+
+type UploadOperationHeader struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
+type AssetDeliveryState struct {
+	State    string                 `json:"state,omitempty"`
+	Errors   []AssetDeliveryMessage `json:"errors,omitempty"`
+	Warnings []AssetDeliveryMessage `json:"warnings,omitempty"`
+}
+
+type AssetDeliveryMessage struct {
+	Code    string `json:"code,omitempty"`
+	Title   string `json:"title,omitempty"`
+	Detail  string `json:"detail,omitempty"`
+	Message string `json:"message,omitempty"`
+}
+
+type CreateBuildUploadRequest struct {
+	Data CreateBuildUploadData `json:"data"`
+}
+
+type CreateBuildUploadData struct {
+	Type          string                         `json:"type"`
+	Attributes    BuildUploadAttributes          `json:"attributes"`
+	Relationships CreateBuildUploadRelationships `json:"relationships"`
+}
+
+type CreateBuildUploadRelationships struct {
+	App RelationshipData `json:"app"`
+}
+
+type CreateBuildUploadFileRequest struct {
+	Data CreateBuildUploadFileData `json:"data"`
+}
+
+type CreateBuildUploadFileData struct {
+	Type          string                             `json:"type"`
+	Attributes    BuildUploadFileAttributes          `json:"attributes"`
+	Relationships CreateBuildUploadFileRelationships `json:"relationships"`
+}
+
+type CreateBuildUploadFileRelationships struct {
+	BuildUpload RelationshipData `json:"buildUpload"`
+}
+
+type UpdateBuildUploadFileRequest struct {
+	Data UpdateBuildUploadFileData `json:"data"`
+}
+
+type UpdateBuildUploadFileData struct {
+	Type       string                    `json:"type"`
+	ID         string                    `json:"id"`
+	Attributes BuildUploadFileAttributes `json:"attributes"`
 }
